@@ -51,7 +51,7 @@ class OutputText extends Sprite
 		}
 		output.appendText(s + "\n");
 		output.scrollV = output.maxScrollV - 1;
-		//trace(s);
+		print(s);
 	}
 	
 }

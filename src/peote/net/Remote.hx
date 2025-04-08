@@ -137,7 +137,7 @@ class RemoteImpl
 			fbody += remoteNames[i] + "(" + [for (j in 0...remoteParams[i].length) 'p$j' ].join(",") + ");"; // remote function call
 			exprs.push(Context.parse('v.set($i, function(input:peote.io.PeoteBytesInput):Void { $fbody })', Context.currentPos()));
 		}
-		exprs.push(Context.parse("return v", Context.currentPos())); //trace( haxe.macro.ExprTools.toString( macro $b{exprs} ) );
+		exprs.push(Context.parse("return v", Context.currentPos())); print( haxe.macro.ExprTools.toString( macro $b{exprs} ) );
 		
 		// add getRemotes function
 		var getRemotes:Function = { 
@@ -161,7 +161,7 @@ class RemoteImpl
 		//Context.defineType(generateRemoteCaller(classnameRemote, true, remoteNames, remoteParams));
 		//Context.defineModule(classpackage.concat([classnameRemote]).join('.'),[generateRemoteCaller(classnameRemote, true, remoteNames, remoteParams)],Context.getLocalImports());
 		Context.defineModule(classpackage.concat([classnameRemote]).join('.'),[generateRemoteCaller(classnameRemote, true, remoteNames, remoteParams)],null);
-		trace('generating: ${classpackage.concat([classnameRemote]).join('.')}');
+		print('generating: ${classpackage.concat([classnameRemote]).join('.')}');
 		
 		var getRemoteServer:Function = { // add function to return an instanze of that class
 			args:[ {name:"server", type:macro:peote.net.PeoteServer, opt:false, value:null},
@@ -187,7 +187,7 @@ class RemoteImpl
 		//Context.defineType(generateRemoteCaller(classnameRemote, false, remoteNames, remoteParams));		
 		//Context.defineModule(classpackage.concat([classnameRemote]).join('.'),[generateRemoteCaller(classnameRemote, false, remoteNames, remoteParams)],Context.getLocalImports());		
 		Context.defineModule(classpackage.concat([classnameRemote]).join('.'),[generateRemoteCaller(classnameRemote, false, remoteNames, remoteParams)],null);		
-		trace('generating: ${classpackage.concat([classnameRemote]).join('.')}');
+		print('generating: ${classpackage.concat([classnameRemote]).join('.')}');
 		
 		var getRemoteClient:Function = { // add function to return an instanze of that class
 			args:[ {name:"client", type:macro:peote.net.PeoteClient, opt:false, value:null},
@@ -257,7 +257,7 @@ class RemoteImpl
 				expr: Context.parse( fbody, Context.currentPos()),
 				ret: null,
 			}
-			//trace( haxe.macro.ExprTools.toString( Context.parse( fbody, Context.currentPos()) ) );
+			print( haxe.macro.ExprTools.toString( Context.parse( fbody, Context.currentPos()) ) );
 			c.fields.push({
 				name: remoteNames[i],
 				access: [APublic],
@@ -328,10 +328,10 @@ class RemoteImpl
 			
 			case "Dynamic":
 				if (isMsgPack) {
-					trace('Remote param "$moduleName" is using MsgPack Serialization.');
+					print('Remote param "$moduleName" is using MsgPack Serialization.');
 					'org.msgpack.MsgPack.decode(input.read());';
 				} else {
-					trace('Remote param "$moduleName" is using haxe.Serializer.');
+					print('Remote param "$moduleName" is using haxe.Serializer.');
 					'haxe.Unserializer.run(input.readString());';
 				}
 			
@@ -399,13 +399,13 @@ class RemoteImpl
 		#if hxbit
 			var path = t.name + ".hx";
 			if (t.pack.length != 0) path = t.pack.join("/") +"/" + path;
-			//trace(path);
+			print(path);
 			try {
 				var p = Context.resolvePath(path);
 				var s:String = sys.io.File.getContent(p);
 				var r = new EReg('class\\s+'+t.name+getFullType(t)+'\\s+[^{]*?implements\\s+hxbit.Serializable[\\s{]', "");
 				if (r.match(s)) {
-					if (!silent) trace("Remote param '"+t.pack.join(".") + ((t.pack.length != 0) ? "." : "") + t.name + "' is using hxbit Serialization.");
+					if (!silent) print("Remote param '"+t.pack.join(".") + ((t.pack.length != 0) ? "." : "") + t.name + "' is using hxbit Serialization.");
 					return true;
 				}
 			}
@@ -421,20 +421,20 @@ class RemoteImpl
 		{
 			var path = t.name + ".hx";
 			if (t.pack.length != 0) path = t.pack.join("/") +"/" + path;
-			//trace(path);
+			print(path);
 			try {
 				var p = Context.resolvePath(path);
 				var s:String = sys.io.File.getContent(p);
 				var r = new EReg('typedef\\s+'+t.name+getFullType(t)+'\\s*=\\s*{', "");
 				if (r.match(s)) {
-					if (!silent) trace("Remote param '"+t.pack.join(".") + ((t.pack.length != 0) ? "." : "") + t.name + "' is using MsgPack Serialization.");
+					if (!silent) print("Remote param '"+t.pack.join(".") + ((t.pack.length != 0) ? "." : "") + t.name + "' is using MsgPack Serialization.");
 					return true;
 				}
 			}
 			catch(e:Dynamic) {}
 		}
 				
-		if (!silent) trace("Remote param '"+t.pack.join(".") + ((t.pack.length != 0) ? "." : "") + t.name + "' is using haxe.Serializer.");
+		if (!silent) print("Remote param '"+t.pack.join(".") + ((t.pack.length != 0) ? "." : "") + t.name + "' is using haxe.Serializer.");
 		return false;
 	}
 	

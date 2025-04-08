@@ -91,13 +91,13 @@ class PeoteNet
 		if (sockets.exists(key))
 		{
 			p = sockets.get(key);
-			#if debugPeoteNet trace(key + " socket exists"); #end
+			print(key + " socket exists"); 
 			if (p.isConnected)
 			{
-				#if debugPeoteNet trace(key + " socket is already connected"); #end
+				print(key + " socket is already connected"); 
 				if (p.addServerJoint(peoteServer, jointId))
 				{
-					#if debugPeoteNet trace(key + " createOwnJoint"); #end
+					print(key + " createOwnJoint"); 
 					p.peoteJointSocket.createOwnJoint(jointId,
 						function (jointNr:Int):Void { peoteServer._onCreateJoint(p.peoteJointSocket, jointNr); },
 						peoteServer._onData,
@@ -110,13 +110,13 @@ class PeoteNet
 			}
 			else
 			{
-				#if debugPeoteNet trace(key + " socket is not connected yet"); #end
+				print(key + " socket is not connected yet"); 
 				if (! p.addServerJoint(peoteServer, jointId)) peoteServer._onCreateJointError(Reason.ID);
 			}
 		}
 		else
 		{
-			#if debugPeoteNet trace(key + " socket did not exists"); #end
+			print(key + " socket did not exists"); 
 			p = new PeoteNetSocket();
 			sockets.set(key, p);
 			
@@ -129,7 +129,7 @@ class PeoteNet
 			
 			if (p.addServerJoint(peoteServer, jointId))
 			{
-				#if debugPeoteNet trace("Peote-Server: trying Connect "+server+":"+port+"..."); #end
+				print("Peote-Server: trying Connect "+server+":"+port+"..."); 
 				p.peoteJointSocket.connect(server, port);
 			}
 			else peoteServer._onCreateJointError(Reason.ID);
@@ -236,17 +236,17 @@ class PeoteNet
 						peoteClient._onEnterJoint(null, jointNr);
 					}
 					else {
-						#if debugPeoteNet trace(key + " local server is not connected yet via socket"); #end
+						print(key + " local server is not connected yet via socket"); 
 						peoteClient._onEnterJointError(Reason.ID); // TODO: Reason: can't connect to local PeoteServer
 					}
 					return;
 				}
 			}
 			
-			#if debugPeoteNet trace(key + " socket exists"); #end
+			print(key + " socket exists"); 
 			if (p.isConnected)
 			{
-				#if debugPeoteNet trace(key + " socket is already connected"); #end
+				print(key + " socket is already connected"); 
 				if (p.addClientJoint(peoteClient, jointId))
 				{
 					p.peoteJointSocket.enterInJoint(jointId,
@@ -260,13 +260,13 @@ class PeoteNet
 			}
 			else
 			{
-				#if debugPeoteNet trace(key + " socket is not connected yet"); #end
+				print(key + " socket is not connected yet"); 
 				if (! p.addClientJoint(peoteClient, jointId) ) peoteClient._onEnterJointError(Reason.ID);
 			}
 		}
 		else
 		{
-			#if debugPeoteNet trace(key + " socket did not exists"); #end
+			print(key + " socket did not exists"); 
 			p = new PeoteNetSocket();
 			sockets.set(key, p);
 			
@@ -279,7 +279,7 @@ class PeoteNet
 			
 			if (p.addClientJoint(peoteClient, jointId))
 			{
-				#if debugPeoteNet trace("Peote-Server: trying Connect "+server+":"+port+"..."); #end
+				print("Peote-Server: trying Connect "+server+":"+port+"..."); 
 				p.peoteJointSocket.connect(server, port);
 			}
 			else peoteClient._onEnterJointError(Reason.ID);
@@ -302,7 +302,7 @@ class PeoteNet
 			}
 			if (Lambda.count(p.server) == 0 && Lambda.count(p.clients) == 0 )
 			{
-				#if debugPeoteNet trace("Peote-Server: " + key + " delete last -> closeed"); #end
+				print("Peote-Server: " + key + " delete last -> closeed"); 
 				p.peoteJointSocket.close();
 				sockets.remove(key);
 			}
@@ -342,7 +342,7 @@ class PeoteNet
 			p.clients.remove(peoteClient);
 			if (Lambda.count(p.server) == 0 && Lambda.count(p.clients) == 0 )
 			{
-				#if debugPeoteNet trace("Peote-Server: " + key + " leave last -> closed"); #end
+				print("Peote-Server: " + key + " leave last -> closed"); 
 				p.peoteJointSocket.close();
 				sockets.remove(key);
 			}
@@ -367,7 +367,7 @@ class PeoteNet
 			}
 			if (Lambda.count(p.server) == 0 && Lambda.count(p.clients) == 0 )
 			{
-				#if debugPeoteNet trace("Peote-Server: " + key + " delete last -> closeed"); #end
+				print("Peote-Server: " + key + " delete last -> closeed"); 
 				p.peoteJointSocket.close();
 				sockets.remove(key);
 			}
@@ -383,7 +383,7 @@ class PeoteNet
 			p.clients.remove(peoteClient);
 			if (Lambda.count(p.server) == 0 && Lambda.count(p.clients) == 0 )
 			{
-				#if debugPeoteNet trace("Peote-Server: " + key + " leave last -> closeed"); #end
+				print("Peote-Server: " + key + " leave last -> closeed"); 
 				p.peoteJointSocket.close();
 				sockets.remove(key);
 			}
@@ -399,7 +399,7 @@ class PeoteNet
 			p.clients.remove(peoteClient);
 			if (Lambda.count(p.server) == 0 && Lambda.count(p.clients) == 0 )
 			{
-				#if debugPeoteNet trace("Peote-Server: " + key + " leave last -> closeed"); #end
+				print("Peote-Server: " + key + " leave last -> closeed"); 
 				p.peoteJointSocket.close();
 				sockets.remove(key);
 			}
@@ -415,7 +415,7 @@ class PeoteNet
 	{
 		var p:PeoteNetSocket = sockets.get(key);
 		if (!isConnected) {
-			#if debugPeoteNet trace("Peote-Server: " + key + " cant connect: " + msg); #end
+			print("Peote-Server: " + key + " cant connect: " + msg); 
 			for (peoteServer in p.server.keys() )
 			{	
 				if (!peoteServer.offline) { // TODO: can it be offline ?
@@ -441,7 +441,7 @@ class PeoteNet
 		}
 		else {
 			p.isConnected = true;
-			#if debugPeoteNet trace("Peote-Server: " + key + " onConnect: " + msg); #end
+			print("Peote-Server: " + key + " onConnect: " + msg); 
 			for (peoteServer in p.server.keys() )
 			{
 				if (!peoteServer.offline) p.peoteJointSocket.createOwnJoint(p.server.get(peoteServer),
@@ -467,7 +467,7 @@ class PeoteNet
 
 	public static function onClose(key:String, msg:String):Void
 	{
-		#if debugPeoteNet trace("Peote-Server: " + key + " onClose: " + msg); #end
+		print("Peote-Server: " + key + " onClose: " + msg); 
 		if (sockets.exists(key))
 		{
 			var p:PeoteNetSocket = sockets.get(key);
@@ -494,7 +494,7 @@ class PeoteNet
 	
 	public static function onError(key:String, msg:String):Void
 	{
-		#if debugPeoteNet trace("Peote-Server: " + key + " onError: " + msg); #end
+		print("Peote-Server: " + key + " onError: " + msg); 
 		if (sockets.exists(key))
 		{
 			var p:PeoteNetSocket = sockets.get(key);

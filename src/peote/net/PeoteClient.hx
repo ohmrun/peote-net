@@ -111,7 +111,7 @@ class PeoteClient
 	public var last_time:Float = 0;
 	public function send(bytes:Bytes):Void
 	{
-		//trace("send:", bytes.toHex());
+		print('send: ${bytes.toHex()}');
 		if (localPeoteServer == null ) {
 			if (this.peoteJointSocket != null) this.peoteJointSocket.sendDataToJointIn(this.jointNr, bytes );
 		}
@@ -131,9 +131,9 @@ class PeoteClient
 		if (bytes.length <= 0) throw("Error(sendChunk): can't send zero length chunk");
 		else if (bytes.length > maxChunkSize)  throw("Error(sendChunk): max chunksize is 65536 Bytes"); // TODO: dynamic chunksize
 		else {
-			//trace("sendChunkSize:", writeChunkSize(bytes.length).toHex());
+			print('sendChunkSize: ${writeChunkSize(bytes.length).toHex()}');
 			send( writeChunkSize(bytes.length) );
-			//trace("sendChunk:", bytes.toHex());
+			print('sendChunk ${bytes.toHex()}');
 			send( bytes );			
 		}
 	}
@@ -188,13 +188,13 @@ class PeoteClient
 	
 	public function _onData(jointNr:Int, bytes:Bytes):Void
 	{
-		//trace("onData: ", bytes.toHex());
+		print('onData:  ${bytes.toHex()}');
 		if (isChunks) {
 		
 			if (input_pos == input_end) { input_pos = input_end = 0; }
 			
-			//var debugOut = "";for (i in 0...bytes.length) debugOut += bytes.get(i) + " ";trace("data:" + debugOut);
-			if (input_end + bytes.length > input.length) trace("ERROR Client: out of BOUNDS");
+			//var debugOut = "";for (i in 0...bytes.length) debugOut += bytes.get(i) + " ";print("data:" + debugOut);
+			if (input_end + bytes.length > input.length) print("ERROR Client: out of BOUNDS");
 			input.blit(input_end, bytes, 0, bytes.length );
 			
 			input_end += bytes.length;
@@ -204,7 +204,7 @@ class PeoteClient
 				byte = input.get(input_pos++);
 				if (chunkBytecount == maxBytesPerChunkSize-1 || byte < 128)
 				{
-					if (byte == 0 && chunkBytecount != 0) trace("MALECIOUS ?");
+					if (byte == 0 && chunkBytecount != 0) print("MALECIOUS ?");
 					chunk_size = chunk_size | (byte << chunkBytecount*7);
 					chunkReady = true; chunkBytecount = 0; chunk_size++;
 				}
@@ -216,9 +216,11 @@ class PeoteClient
 			}
 			
 			if ( chunkReady && input_end-input_pos >= chunk_size )
-			{	//trace("chunk_size:"+chunk_size);
+			{	print("chunk_size:"+chunk_size);
 				var b:Bytes = Bytes.alloc(chunk_size);
-				//trace(" ---> onDataChunk: " + b.length + "Bytes ( start:"+input_pos+" end:"+input_end+ ")",b.get(0), b.get(1), b.get(2));
+				print(
+					' ---> onDataChunk: ${b.length} Bytes ( start: ${input_pos} end: ${input_end} ${b.get(0)} ${b.get(1)} ${b.get(2)}'
+				);
 				b.blit(0, input, input_pos, chunk_size);
 				input_pos += chunk_size;
 				chunk_size = 0; chunkReady = false;
@@ -247,16 +249,16 @@ class PeoteClient
 	public function remote(bytes:Bytes)
 	{
 		var input = new PeoteBytesInput(bytes);		
-		var remoteId = input.readByte(); //trace("remoteId:"+remoteId);
+		var remoteId = input.readByte(); print("remoteId:"+remoteId);
 		
 		if (input.bytesLeft() == 0)	events.onRemote(this, remoteId);
 		else
 		{
 			// check that remoteID exists 
-			var remoteObject = remotes.get(remoteId); //trace("remoteObject:"+remoteObject);
+			var remoteObject = remotes.get(remoteId); print("remoteObject:"+remoteObject);
 			if (remoteObject != null)
 			{
-				var procedureNr = input.readByte(); //trace("procedureNr:" + procedureNr);
+				var procedureNr = input.readByte(); print("procedureNr:" + procedureNr);
 				// check max remotes
 				if (procedureNr < remoteObject.length)
 					try remoteObject[procedureNr](input) catch (m:Dynamic) events.onError(this, Reason.MALICIOUS);

@@ -219,6 +219,7 @@ class PeoteServer
 	
 	public function _onData(jointNr:Int, userNr:Int, bytes:Bytes):Void
 	{	
+		print('isChunks ${isChunks} length ${bytes.length} ${bytes.toString()}');
 		if (isChunks) {
 			inputBuffers.get(userNr).onData(bytes);
 		}
@@ -243,19 +244,19 @@ class PeoteServer
 	{
 		var input = new PeoteBytesInput(bytes);
 		
-		var remoteId = input.readByte(); //trace("remoteId:"+remoteId);
+		var remoteId = input.readByte(); print("remoteId:"+remoteId);
 		
 		if (input.bytesLeft() == 0) events.onRemote(this, userNr, remoteId);
 		else
 		{			
 			// check that remoteID exists 
-			var remoteObject = remotes.get(userNr).get(remoteId); //trace("remoteObject:"+remoteObject);
+			var remoteObject = remotes.get(userNr).get(remoteId); print("remoteObject:"+remoteObject);
 			if (remoteObject != null)
 			{
-				var procedureNr = input.readByte(); //trace("procedureNr:" + procedureNr);
+				var procedureNr = input.readByte(); print("procedureNr:" + procedureNr);
 				// check max remotes
 				if (procedureNr < remoteObject.length)
-					try remoteObject[procedureNr](input) catch (m:Dynamic) {trace(m); events.onError(this, userNr, Reason.MALICIOUS);}
+					try remoteObject[procedureNr](input) catch (m:Dynamic) {print(m); events.onError(this, userNr, Reason.MALICIOUS);}
 				else events.onError(this, userNr, Reason.MALICIOUS);
 			} else events.onError(this, userNr, Reason.MALICIOUS);  // TODO: disconnect user if malicous input
 		}
@@ -289,19 +290,21 @@ class InputBuffer {
 	public function onData(bytes:Bytes):Void
 	{
 		if (input_pos == input_end) { input_pos = input_end = 0; }
-		
-		//var debugOut = "";for (i in 0...bytes.length) debugOut += bytes.get(i) + " ";trace("data:" + debugOut);		
-		if (input_end + bytes.length > input.length) trace("ERROR Server: out of BOUNDS");
+		print('input_end: ${input_end} bytes.length ${bytes.length} bytes $bytes');
+		//var debugOut = "";for (i in 0...bytes.length) debugOut += bytes.get(i) + " ";print("data:" + debugOut);		
+		if (input_end + bytes.length > input.length) print("ERROR Server: out of BOUNDS");
 		input.blit(input_end, bytes, 0, bytes.length );
 		
 		input_end += bytes.length;
 				
+		print(input.toString());
 		while (!chunkReady && input_end-input_pos >=1) {
 			
 			byte = input.get(input_pos++);
+			print(byte);
 			if (chunkBytecount == maxBytesPerChunkSize-1 || byte < 128)
 			{
-				if (byte == 0 && chunkBytecount != 0) trace("MALECIOUS ?");
+				if (byte == 0 && chunkBytecount != 0) print("MALECIOUS ?");
 				chunk_size = chunk_size | (byte << chunkBytecount*7);
 				chunkReady = true; chunkBytecount = 0; chunk_size++; 
 			}
@@ -315,7 +318,9 @@ class InputBuffer {
 		if ( chunkReady && input_end-input_pos >= chunk_size )
 		{
 			var b:Bytes = Bytes.alloc(chunk_size);
-			//trace(" ---> onDataChunk: " + b.length + "Bytes ( start:"+input_pos+" end:"+input_end+ ")",b.get(0), b.get(1), b.get(2));
+			print(
+				' ---> onDataChunk: ${b.length} Bytes ( start: ${input_pos} end: ${input_end} ${b.get(0)} ${b.get(1)} ${b.get(2)}'
+			);
 			b.blit(0, input, input_pos, chunk_size);
 			input_pos += chunk_size;
 			chunk_size = 0; chunkReady = false;
