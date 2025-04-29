@@ -134,8 +134,8 @@ class PeoteJointSocket
 	public function createOwnJoint(joint_id:String, commandCallback:Int -> Void,
 												dataCallback:Int -> Int -> Bytes -> Void,
 												userConnectCallback:Int -> Int-> Void,
-												userDisconnectCallback:Int -> Int -> Int -> Void,
-												errorCallback:Int -> Void = null):Void 
+												userDisconnectCallback:Int -> Int -> Reason -> Void,
+												errorCallback:Reason -> Void = null):Void 
 	{
 		var bytes:Bytes = Bytes.ofString(joint_id);
 		if (bytes.length <= 255)
@@ -171,8 +171,8 @@ class PeoteJointSocket
 	private function onCreateOwnJoint(command_chunk:Bytes, commandCallback:Int -> Void,
 															dataCallback:Int -> Int -> Bytes -> Void,
 															userConnectCallback:Int -> Int-> Void,
-															userDisconnectCallback:Int -> Int -> Int -> Void,
-															errorCallback:Int -> Void = null):Void 
+															userDisconnectCallback:Int -> Int -> Reason -> Void,
+															errorCallback:Reason -> Void = null):Void 
 	{
 		if (command_chunk.get(0) == 0) // -> OK 
 		{	
@@ -204,7 +204,7 @@ class PeoteJointSocket
 		userConnectCallback(joint_nr, command_chunk.get(0));
 	}
 	
-	private function onUserDisconnect(userDisconnectCallback:Int -> Int -> Int -> Void, joint_nr:Int, command_chunk:Bytes):Void
+	private function onUserDisconnect(userDisconnectCallback:Int -> Int -> Reason -> Void, joint_nr:Int, command_chunk:Bytes):Void
 	{
 		userDisconnectCallback(joint_nr,  command_chunk.get(0),  command_chunk.get(1));
 	}
@@ -252,8 +252,8 @@ class PeoteJointSocket
 */	
 	public function enterInJoint(joint_id:String, commandCallback:Int -> Void,
 												dataCallback:Int -> Bytes -> Void,
-												disconnectCallback:Int -> Int -> Void,
-												errorCallback:Int -> Void = null):Void 
+												disconnectCallback:Int -> Reason -> Void,
+												errorCallback:Reason -> Void = null):Void 
 	{
 		var bytes:Bytes = Bytes.ofString(joint_id);
 		if (bytes.length <= 255)
@@ -287,8 +287,8 @@ class PeoteJointSocket
 	
 	private function onEnterInJoint(command_chunk:Bytes, commandCallback:Int -> Void,
 															dataCallback:Int -> Bytes -> Void,
-															disconnectCallback:Int -> Int -> Void,
-															errorCallback:Int -> Void = null):Void 
+															disconnectCallback:Int -> Reason -> Void,
+															errorCallback:Reason -> Void = null):Void 
 	{
 		if (command_chunk.get(0) == 0) // -> OK 
 		{	print("OK ----");
@@ -315,7 +315,7 @@ class PeoteJointSocket
 		}
 	}
 	
-	private function onInDisconnect(disconnectCallback:Int -> Int -> Void, joint_nr:Int, command_chunk:Bytes):Void
+	private function onInDisconnect(disconnectCallback:Int -> Reason -> Void, joint_nr:Int, command_chunk:Bytes):Void
 	{
 		inJointDataCallback.remove(joint_nr);
 		disconnectCallback(joint_nr, command_chunk.get(0));
@@ -610,12 +610,65 @@ class PeoteJointSocket
 		}
 	}
 	
+	public function broadcastToJointOwn(joint_nr:Int, ba:Bytes, ?excludeUserNr:Null<Int>):Void
+	{	//trace("broadcast chunk trought OWN joint, length="+ba.length + ((excludeUserNr!=null) ? ', exclude user:$user_nr' : ""));
+		if (ba.length <= 32767 - 2)
+		{
+			peoteSocket.writeByte(1); // broadcast command is followed
+
+			if (excludeUserNr !=null) {
+				peoteSocket.writeByte(0); // broadcast command nr -> send to ALL but exclude one user
+				writeChunkSize(ba.length+2);
+				peoteSocket.writeByte(joint_nr+128);
+				peoteSocket.writeByte(excludeUserNr);
+			}
+			else {
+				peoteSocket.writeByte(1); // broadcast command nr -> send to ALL
+				writeChunkSize(ba.length+1);
+				peoteSocket.writeByte(joint_nr+128);
+			}
+			
+			peoteSocket.writeBytes(ba);
+			peoteSocket.flush();
+		}
+		else
+		{
+			var pos:Int = 0;
+			var len:Int;
+
+			if (excludeUserNr !=null)
+				while (pos < ba.length) {	
+					peoteSocket.writeByte(1); // broadcast command is followed
+					peoteSocket.writeByte(0); // broadcast command nr -> send to ALL but exclude one user
+					len =  (ba.length - pos < 32767 - 2) ? ba.length - pos : 32767 - 2;
+					writeChunkSize(len+2);
+					peoteSocket.writeByte(joint_nr + 128);
+					peoteSocket.writeByte(excludeUserNr);
+					writeFullBytes(ba, pos, len);
+					peoteSocket.flush();
+					pos += len;
+				}
+			else
+				while (pos < ba.length) {	
+					peoteSocket.writeByte(1); // broadcast command is followed
+					peoteSocket.writeByte(1); // broadcast command nr -> send to ALL
+					len =  (ba.length - pos < 32767 - 1) ? ba.length - pos : 32767 - 1;
+					writeChunkSize(len+1);
+					peoteSocket.writeByte(joint_nr + 128);
+					writeFullBytes(ba, pos, len);
+					peoteSocket.flush();
+					pos += len;
+				}
+			
+		}
+	}
+	/*
 	public function sendChunk(bytes:Bytes):Void 
 	{
 		writeChunkSize(bytes.length);
 		peoteSocket.writeBytes(bytes);
 		peoteSocket.flush();
-	}
+	}*/
 	
 	public function writeChunkSize(chunk_size:Int):Void
 	{

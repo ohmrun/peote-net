@@ -137,8 +137,7 @@ class PeoteServer
 
 	public inline function broadcast(bytes:Bytes, ?excludeUserNr:Null<Int>):Void
 	{
-		// TODO:
-		// this.peoteJointSocket.broadcastToJointOwn(this.jointNr, bytes, excludeUserNr);
+		this.peoteJointSocket.broadcastToJointOwn(this.jointNr, bytes, excludeUserNr);
 		
 		if (localPeoteClient.exists(PeoteNet.MAX_USER)) // send to all local clients (same runtime)
 		{
@@ -160,6 +159,16 @@ class PeoteServer
 		else {
 			send( userNr, writeChunkSize(bytes.length) );
 			send( userNr, bytes );
+		}
+	}
+	
+	public function broadcastChunk(bytes:Bytes, ?excludeUserNr:Null<Int>):Void
+	{
+		if (bytes.length <= 0) throw("Error(sendChunk): can't send zero length chunk");
+		else if (bytes.length > maxChunkSize)  throw('Error(sendChunk): max chunksize is $maxChunkSize Bytes');
+		else {
+			broadcast( writeChunkSize(bytes.length), excludeUserNr);
+			broadcast( bytes, excludeUserNr);
 		}
 	}
 	
@@ -200,10 +209,10 @@ class PeoteServer
 		events.onCreate(this);
 	}
 	
-	public inline function _onCreateJointError(errorNr:Int):Void
+	public inline function _onCreateJointError(reason:Reason):Void
 	{
 		this.server = "";
-		events.onError(this, -1, errorNr);
+		events.onError(this, -1, reason);
 	}
 	
 	public inline function _onUserConnect(jointNr:Int, userNr:Int):Void 
@@ -216,7 +225,7 @@ class PeoteServer
 		events.onUserConnect(this, userNr);
 	}
 	
-	public inline function _onUserDisconnect(jointNr:Int, userNr:Int, reason:Int):Void 
+	public inline function _onUserDisconnect(jointNr:Int, userNr:Int, reason:Reason):Void 
 	{
 		remotes[userNr] = null;
 		

@@ -1,7 +1,6 @@
 package peote.net;
 
-#if (haxe_ver >= 4.0) enum #else @:enum#end
-abstract Reason(Int) from Int to Int 
+enum abstract Reason(Int) from Int to Int
 {
 	inline var DISCONNECT :Int = 0; // disconnected from peote-server (joint-owner/user)
 	inline var CLOSE      :Int = 1; // owner closed joint or user leaves
